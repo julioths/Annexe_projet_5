@@ -1,0 +1,64 @@
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+# Paramètres
+beta = 0.3
+sigma = 0.2
+gamma = 0.1
+mu = 0.01
+N = 1000
+
+# Méthode d’Euler
+def euler_sier(S0, E0, I0, R0, dt=0.5, T=300):
+    S, E, I, R = [S0], [E0], [I0], [R0]
+    n = int(T / dt)
+    for _ in range(n):
+        Sk, Ek, Ik, Rk = S[-1], E[-1], I[-1], R[-1]
+        N_k = Sk + Ek + Ik + Rk
+
+        dS = mu*N_k - beta * Sk * Ik / N_k - mu * Sk
+        dE = beta * Sk * Ik / N_k - (sigma + mu) * Ek
+        dI = sigma * Ek - (gamma + mu) * Ik
+        dR = gamma * Ik - mu * Rk
+
+        S.append(Sk + dt * dS)
+        E.append(Ek + dt * dE)
+        I.append(Ik + dt * dI)
+        R.append(Rk + dt * dR)
+    return S, E, I, R
+
+# Tracé 3D
+fig = plt.figure(figsize=(12, 8))
+ax = fig.add_subplot(111, projection='3d')
+
+# Conditions initiales variées
+initial_conditions = [
+    (990, 5, 5, 0), (980, 10, 10, 0), (950, 30, 20, 0),
+    (970, 0, 30, 0), (995, 0, 5, 0), (900, 80, 20, 0)
+]
+
+for S0, E0, I0, R0 in initial_conditions:
+    S, E, I, R = euler_sier(S0, E0, I0, R0)
+    ax.plot(S, I, R, alpha=0.8)
+
+
+
+R0_basic = beta / (gamma + mu)
+
+I_eq = mu * (R0_basic*sigma/(sigma+mu) - 1) * N / beta
+S_eq = (gamma + mu) * N / beta
+E_eq = (gamma + mu) * I_eq / sigma
+R_eq = gamma * I_eq / mu
+
+
+# Affichage de l’équilibre
+ax.scatter(S_eq, I_eq, R_eq, color='red', s=100, label="Équilibre", edgecolors='black')
+
+# Axes et étiquettes
+ax.set_xlabel("S (susceptibles)")
+ax.set_ylabel("I (infectés)")
+ax.set_zlabel("R (rétablis)")
+ax.set_title("Diagramme de phase 3D du modèle SIER avec naissances et décès")
+ax.legend()
+plt.tight_layout()
+plt.show()
